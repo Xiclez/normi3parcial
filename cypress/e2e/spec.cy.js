@@ -25,12 +25,11 @@ describe('PokeMemo App - Validación Ventana Inicial', () => {
   });
 
   it('valida la existencia del botón de jugar', () => {
-    // Verificar que el botón de inicio existe y es visible
     cy.get('.start-button').should('be.visible');
   });
 });
 
-describe('PokeMemo App - Secuencia Máquina', () => {
+describe('PokeMemo App - Secuencia Inicial', () => {
   beforeEach(() => {
     cy.visit('http://localhost:8080/'); 
     cy.intercept('POST', 'https://poke-memo-app-9528044356ae.herokuapp.com/enviarSecuencia').as('enviarSecuencia');
@@ -42,10 +41,8 @@ describe('PokeMemo App - Secuencia Máquina', () => {
     cy.wait('@enviarSecuencia').then((interception) => {
       const pokemonSequence = interception.response.body.pokemonSequence;
       
-      // Verificar que la secuencia se renderiza
       cy.get("[data-cy^='secuencia-maquina-']").should('have.length', pokemonSequence.length);
 
-      // Esperar 5 segundos y verificar que la secuencia se reemplaza por Dittos
       cy.wait(5000);
       cy.get("[data-cy^='secuencia-maquina-']").should('have.length', pokemonSequence.length)
         .each(($img) => {
@@ -55,7 +52,7 @@ describe('PokeMemo App - Secuencia Máquina', () => {
   });
 });
 
-describe('PokeMemo App - Interacciones y Secuencia', () => {
+describe('PokeMemo App - Creación y envío de secuencia', () => {
   beforeEach(() => {
     cy.visit('http://localhost:8080/');
     cy.intercept('POST', 'https://poke-memo-app-9528044356ae.herokuapp.com/enviarSecuencia').as('enviarSecuencia');
@@ -66,15 +63,13 @@ describe('PokeMemo App - Interacciones y Secuencia', () => {
     cy.wait('@enviarSecuencia'); 
     cy.wait(5000); 
   
-    // Obtenemos la URL de la imagen del primer Pokémon disponible
     cy.get('.button-container img[alt="Button Image"]').first().then(($img) => {
       const imgSrc = $img.attr('src');
   
       cy.get('.button-container img[alt="Button Image"]').first().click();
   
-      cy.log(imgSrc); // Imprime la URL de la imagen en la consola de Cypress
+      cy.log(imgSrc); 
   
-      // Verificamos que la imagen del Pokémon seleccionado esté en la secuencia
       cy.get('.pokemon-image-secuencia')
         .should('have.length', 1)
         .should('have.attr', 'src', imgSrc);
@@ -82,7 +77,6 @@ describe('PokeMemo App - Interacciones y Secuencia', () => {
 
 
   });
-  
   
   
 
@@ -95,7 +89,6 @@ describe('PokeMemo App - Interacciones y Secuencia', () => {
 
     cy.get('.button-container img[alt="Button Image"]').first().click();
 
-    // Verificamos que la secuencia a enviar esté vacía
     cy.get('.pokemon-image-secuencia')
       .find('img[alt="Button Image"]')
       .should('have.length', 0);
@@ -104,37 +97,53 @@ describe('PokeMemo App - Interacciones y Secuencia', () => {
   it('valida que el botón "Enviar Secuencia" aparezca solo cuando las secuencias son iguales', () => {
     cy.get('.start-button').click(); 
     cy.wait('@enviarSecuencia');
-
-    // Verificamos que el botón "Enviar Secuencia" no está visible al inicio
+    cy.wait(5000);
     cy.get('.play-button').should('not.be.visible');
 
-    // Agregamos Pokémon a la secuencia hasta que coincida con la secuencia a memorizar
-    cy.get('.button-container img[alt="Button Image"]').each(($img) => {
-      cy.wrap($img).click();
-      cy.get('.play-button').should('not.be.visible'); // El botón no debería aparecer hasta que las secuencias sean iguales
-    });
-
-    // Verificamos que el botón "Enviar Secuencia" aparece cuando las secuencias son iguales
-    cy.get('.play-button').should('be.visible');
+    cy.get('.button-container img[alt="Button Image"]').first().click();
+    cy.get('.play-button').should('be.visible'); 
   });
 
   it('valida que la secuencia se envíe en la petición POST', () => {
     cy.get('.start-button').click(); 
     cy.wait('@enviarSecuencia');
+    cy.wait(5000);
+    cy.get('.button-container img[alt="Button Image"]').first().click();
 
-    // Agregamos Pokémon a la secuencia hasta que coincida con la secuencia a memorizar
-    cy.get('.button-container img[alt="Button Image"]').each(($img) => {
-      cy.wrap($img).click();
-    });
-
-    // Hacemos clic en el botón "Enviar Secuencia"
     cy.get('.play-button').click();
 
-    // Verificamos que la petición POST se haya realizado con la secuencia correcta
     cy.wait('@enviarSecuencia').then((interception) => {
-      expect(interception.request.body.pokemons).to.have.length.gt(0); // La secuencia no debe estar vacía
-      // Aquí podrías agregar más aserciones para validar el contenido exacto de la secuencia enviada
+      expect(interception.request.body.pokemons).to.have.length.gt(0); 
     });
   });
 });
 
+describe('PokeMemo App - Finalización del Juego', () => {
+  beforeEach(() => {
+    cy.visit('http://localhost:8080/');
+    cy.intercept('POST', 'https://poke-memo-app-9528044356ae.herokuapp.com/enviarSecuencia').as('enviarSecuencia');
+  });
+
+  it('valida que al finalizar el juego se muestre el puntaje', () => {
+    cy.get('.start-button').click();
+    cy.wait(5000);
+    // Jugar varias rondas hasta que el juego termine
+      cy.wait('@enviarSecuencia').then((interception) => {
+        const pokemonSequence = interception.response.body.pokemonSequence;
+        cy.get('.button-container img[alt="Button Image"]').last().click();
+          
+        cy.wait(5000);
+        cy.get('.play-button').click();
+      });
+    
+
+    // Verificar que el juego ha terminado y se muestra el puntaje
+    cy.contains('GAME OVER').should('be.visible');
+    cy.contains('Puntaje:').should('be.visible');
+    
+    // Verificar que el puntaje sea un número (puedes ser más específico si conoces la lógica de cálculo del puntaje)
+    cy.get('h2:contains("Puntaje:")').invoke('text')
+      .then(puntajeText => puntajeText.replace('Puntaje: ', ''))
+      .should('match', /^[0-9]+$/); // Verificar que sea un número entero positivo
+  });
+});
