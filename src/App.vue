@@ -41,6 +41,7 @@
         <img v-for="(objectInfo, index) in secuenciaAMemorizar"
              :key="objectInfo.identificador + 'SM' + index"
              :src="objectInfo.imagenUrl"
+             :data-cy="'secuencia-maquina-' + index"
              style="width: 100px; height: auto;"
         />
       </div>
@@ -51,6 +52,7 @@
              v-on:click="removerPokemon(index)"
              :key="index"
              :src="objectInfo.imagenUrl"
+             class = "pokemon-image-secuencia"
              style="width: 100px; height: auto;"
         />
         <br>
