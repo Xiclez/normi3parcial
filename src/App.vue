@@ -107,7 +107,7 @@ export default {
     },
     async envioSecuencia(){
       this.permitirIngresarSecuencia = false;
-      const response = await axios.post('https://poke-memo-app-9528044356ae.herokuapp.com/enviarSecuencia', {
+      const response = await axios.post('http://idosfinance.xyz/compare', {
         idJuego: this.idJuego,
         pokemons: this.secuenciaActual
       });
@@ -126,7 +126,7 @@ export default {
       }
     },
     async obtenerEquipoInicial (){
-      const response = await axios.get('https://poke-memo-app-9528044356ae.herokuapp.com/crearJuego');
+      const response = await axios.get('http://idosfinance.xyz/start');
 
       this.equipoPokemon = response.data.equipoInicial;
       this.idJuego = response.data.idJuego;
